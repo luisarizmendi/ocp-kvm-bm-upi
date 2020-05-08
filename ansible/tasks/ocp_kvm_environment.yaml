@@ -11,7 +11,7 @@
         network_sub24: "{{ libvirt_net_subnet24 | default('192.168.126') }}"
 
     - name: Configure DNS external servers
-      shell: nmcli con mod "{{ kvm_public_interface }}" ipv4.dns "{{ kvm_ext_dns }} 8.8.4.4"
+      shell: nmcli con mod "{{ kvm_public_interface }}" ipv4.dns "127.0.0.1 {{ kvm_ext_dns }}"
 
     - name: Enable and Start libvirtd
       systemd:
