@@ -2,7 +2,7 @@
 
 - name: Install KVM
   become: true
-  when: (kvm_configure is not defined) or (kvm_configure  != "false")   
+  when: (kvm_configure is not defined) or (kvm_configure  != "false")
   tags: install
   block:
     - name: Installing KVM Packages
@@ -39,6 +39,10 @@
         name: NetworkManager
         state: started
         enabled: yes
+
+    - name: Configure DNS external servers
+      shell: nmcli con mod "{{ kvm_public_interface }}" ipv4.dns "{{ kvm_ext_dns }} 8.8.4.4"
+
 
 
     - name: Enable and Start libvirtd
