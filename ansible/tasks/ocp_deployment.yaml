@@ -46,6 +46,9 @@
 
 
 
+    - pause:
+        minutes: 5
+
     - name: Copy kubeconfig for admin
       shell: "mkdir ~/.kube ; cp {{ ocp_install_path | default('~/ocp') }}/install/auth/kubeconfig ~/.kube/config "
 
