@@ -11,6 +11,7 @@ ocp_worker_disk: 120
 
 ## Interface name as appears in 'nmcli con show' command
 kvm_public_interface: "< interface >"
+kvm_ext_dns: "8.8.8.8"
 
 ocp_install_config_file: "install-config.yaml"
 

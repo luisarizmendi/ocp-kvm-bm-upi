@@ -10,6 +10,15 @@
         network_name: "{{ metadata.name }}"
         network_sub24: "{{ libvirt_net_subnet24 | default('192.168.126') }}"
 
+    - name: Configure DNS external servers
+      shell: nmcli con mod "{{ kvm_public_interface }}" ipv4.dns "{{ kvm_ext_dns }} 8.8.4.4"
+
+    - name: Enable and Start libvirtd
+      systemd:
+        name: libvirtd
+        state: restarted
+        enabled: yes
+
 
 - name: Create VMs
   tags: install
@@ -69,7 +78,7 @@
 
     - name: Stop Workers
       ignore_errors: yes
-      virt: 
+      virt:
         name: "{{ metadata.name }}-worker-{{ item }}"
         state: destroyed
       with_sequence: start=0 end="{{ compute.0.replicas|int - 1 }}" stride=1
@@ -83,7 +92,7 @@
 
     - name: Stop Masters
       ignore_errors: yes
-      virt: 
+      virt:
         name: "{{ metadata.name }}-master-{{ item }}"
         state: destroyed
       with_sequence: start=0 end="{{ controlPlane.replicas|int - 1 }}" stride=1
@@ -97,7 +106,7 @@
 
     - name: Stop {{ metadata.name }}-bootstrap
       ignore_errors: yes
-      virt: 
+      virt:
         name: "{{ metadata.name }}-bootstrap"
         state: destroyed
 
@@ -110,7 +119,7 @@
 
     - name: Delete Disks
       shell: "rm -rf  {{ kvm_path_vms | default('/var/lib/libvirt/vms') }}/{{ metadata.name }}*"
-   
+
 
 - name: Destroy Libvirt Networks
   become: true
