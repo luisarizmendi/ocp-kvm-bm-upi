@@ -46,7 +46,8 @@
 
 
 
-    - name: Create compute node
+    - name: Create worker nodes
+      ignore_errors: yes
       include: create-vm.yml
       vars:
         vm_instance_name: "{{ metadata.name }}-worker-{{ item }}"
