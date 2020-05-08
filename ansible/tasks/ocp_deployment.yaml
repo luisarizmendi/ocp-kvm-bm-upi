@@ -25,7 +25,7 @@
       with_sequence: start=0 end="{{ compute.0.replicas|int - 1 }}" stride=1
 
 
-    - name: Fix All-in-One BUG (https://bugzilla.redhat.com/show_bug.cgi?id=1805034)
+    - name: Fix  Single Master BUG (https://bugzilla.redhat.com/show_bug.cgi?id=1805034)
       shell: |
         failing  > /dev/null 2>&1
         while [ $? -ne 0 ]
