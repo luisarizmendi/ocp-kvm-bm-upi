@@ -19,13 +19,14 @@
       with_sequence: start=0 end="{{ controlPlane.replicas|int - 1 }}" stride=1
 
     - name: Start Workers
+      ignore_errors: yes
       virt: 
         name: "{{ metadata.name }}-worker-{{ item }}"
         state: running
       with_sequence: start=0 end="{{ compute.0.replicas|int - 1 }}" stride=1
 
 
-    - name: Fix  Single Master BUG (https://bugzilla.redhat.com/show_bug.cgi?id=1805034)
+    - name: Waiting bootstrap and fixing Single Master BUG (https://bugzilla.redhat.com/show_bug.cgi?id=1805034)
       shell: |
         failing  > /dev/null 2>&1
         while [ $? -ne 0 ]
