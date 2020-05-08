@@ -45,12 +45,20 @@
       until: bootstrap_status.rc == 0
 
 
-
     - pause:
-        minutes: 5
+        minutes: 1
 
     - name: Copy kubeconfig for admin
       shell: "mkdir ~/.kube ; cp {{ ocp_install_path | default('~/ocp') }}/install/auth/kubeconfig ~/.kube/config "
+
+
+    - name: Approving the CSRs
+      shell: "for i in $(/usr/local/bin/oc get csr -o name  --all-namespaces); do  /usr/local/bin/oc adm certificate approve $i ; done"
+
+
+
+    - pause:
+        minutes: 1
 
 
     - name: Approving the CSRs
