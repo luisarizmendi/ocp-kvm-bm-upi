@@ -12,7 +12,13 @@
     command: define
     xml: "{{ lookup('template', 'ansible/templates/vm.xml.j2') }}"
 
+
+- name: Set autostart for a VM
+  virt:
+    name: "{{ vm_instance_name }}"
+    autostart: yes
+
 #- name: Start VirtualMachine {{ vm_instance_name }}
-#  virt: 
+#  virt:
 #    name: "{{ vm_instance_name }}"
 #    state: running
