@@ -15,7 +15,7 @@
 
     - name: Enable and Start libvirtd
       systemd:
-        name: libvirtd
+        name: NetworkManager
         state: restarted
         enabled: yes
 
