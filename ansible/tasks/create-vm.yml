@@ -1,0 +1,18 @@
+---
+# # VM: https://github.com/jdauphant/ansible-role-kvm/blob/master/templates/vm.kvm.libvirt.xml.j2
+- name: Create primary disk for {{ vm_instance_name }}
+  command: "qemu-img create -f qcow2 {{ kvm_path_vms | default('/var/lib/libvirt/vms') }}/{{ vm_instance_name }}.qcow2 {{ vm_root_disk_size }}G"
+  args:
+    creates: "{{ kvm_path_vms | default('/var/lib/libvirt/vms') }}/{{ vm_instance_name }}.qcow2"
+
+
+- name: Define VirtualMachine {{ vm_instance_name }}
+  virt:
+    name: "{{ vm_instance_name }}"
+    command: define
+    xml: "{{ lookup('template', 'ansible/templates/vm.xml.j2') }}"
+
+#- name: Start VirtualMachine {{ vm_instance_name }}
+#  virt: 
+#    name: "{{ vm_instance_name }}"
+#    state: running

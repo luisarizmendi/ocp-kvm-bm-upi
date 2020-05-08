@@ -1,0 +1,122 @@
+---
+- name: Create libvirt network
+  tags: install
+  become: true
+  block:
+
+    - name: Define primary network
+      include: create-net.yml
+      vars:
+        network_name: "{{ metadata.name }}"
+        network_sub24: "{{ libvirt_net_subnet24 | default('192.168.126') }}"
+
+
+- name: Create VMs
+  tags: install
+  become: true
+  block:
+
+    - name: Create bootstrap
+      include: create-vm.yml
+      vars:
+        vm_instance_name: "{{ metadata.name }}-bootstrap"
+        vm_network: "{{ metadata.name }}"
+        vm_mac_address: "52:54:60:11:11:11"
+        vm_vcpu: "4"
+        vm_special_cpu: ""
+        vm_memory_size: "16"
+        vm_memory_unit: "GiB"
+        vm_root_disk_size: "{{ 120 }}"
+
+
+
+    - name: Create master nodes
+      include: create-vm.yml
+      vars:
+        vm_instance_name: "{{ metadata.name }}-master-{{ item }}"
+        vm_network: "{{ metadata.name }}"
+        vm_mac_address: "52:54:60:00:00:{{ '%02x' % (10 + item|int) }}"
+        vm_vcpu: "{{ ocp_master_cpu }}"
+        vm_special_cpu: "{{ master_special_cpu | default('') }}"
+        vm_memory_size: "{{ ocp_master_memory }}"
+        vm_memory_unit: "{{ master_memory_unit | default('GiB') }}"
+        vm_root_disk_size: "{{ ocp_master_disk }}"
+      with_sequence: start=0 end="{{ controlPlane.replicas|int - 1 }}" stride=1
+
+
+
+
+    - name: Create compute node
+      include: create-vm.yml
+      vars:
+        vm_instance_name: "{{ metadata.name }}-worker-{{ item }}"
+        vm_network: "{{ metadata.name }}"
+        vm_mac_address: "52:54:60:00:01:{{ '%02x' % (10 + item|int) }}"
+        vm_vcpu: "{{ ocp_worker_cpu }}"
+        vm_special_cpu: "{{ compute_special_cpu | default('') }}"
+        vm_memory_size: "{{ ocp_worker_memory }}"
+        vm_memory_unit: "{{ worker_memory_unit | default('GiB') }}"
+        vm_root_disk_size: "{{ ocp_worker_disk }}"
+      with_sequence: start=0 end="{{ compute.0.replicas|int - 1 }}" stride=1
+
+
+
+- name: Destroy VMs
+  become: true
+  tags: remove
+  block:
+
+    - name: Stop Workers
+      ignore_errors: yes
+      virt: 
+        name: "{{ metadata.name }}-worker-{{ item }}"
+        state: destroyed
+      with_sequence: start=0 end="{{ compute.0.replicas|int - 1 }}" stride=1
+
+    - name: Delete Workers
+      ignore_errors: yes
+      virt:
+        name: "{{ metadata.name }}-worker-{{ item }}"
+        command: undefine
+      with_sequence: start=0 end="{{ compute.0.replicas|int - 1 }}" stride=1
+
+    - name: Stop Masters
+      ignore_errors: yes
+      virt: 
+        name: "{{ metadata.name }}-master-{{ item }}"
+        state: destroyed
+      with_sequence: start=0 end="{{ controlPlane.replicas|int - 1 }}" stride=1
+
+    - name: Delete Masters
+      ignore_errors: yes
+      virt:
+        name: "{{ metadata.name }}-master-{{ item }}"
+        command: undefine
+      with_sequence: start=0 end="{{ controlPlane.replicas|int - 1 }}" stride=1
+
+    - name: Stop {{ metadata.name }}-bootstrap
+      ignore_errors: yes
+      virt: 
+        name: "{{ metadata.name }}-bootstrap"
+        state: destroyed
+
+    - name: Delete Bootstrap
+      ignore_errors: yes
+      virt:
+        name: "{{ metadata.name }}-bootstrap"
+        command: undefine
+
+
+    - name: Delete Disks
+      shell: "rm -rf  {{ kvm_path_vms | default('/var/lib/libvirt/vms') }}/{{ metadata.name }}*"
+   
+
+- name: Destroy Libvirt Networks
+  become: true
+  tags: remove
+  block:
+
+    - name: Delete primary network {{ metadata.name }}
+      virt_net:
+        state: absent
+        name: "{{ metadata.name }}"

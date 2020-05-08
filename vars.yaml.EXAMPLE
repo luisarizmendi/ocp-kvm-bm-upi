@@ -1,0 +1,19 @@
+---
+
+ocp_release: "4.4.3"
+
+ocp_master_memory: 16
+ocp_master_cpu: 4
+ocp_master_disk: 120
+ocp_worker_memory: 24
+ocp_worker_cpu: 4
+ocp_worker_disk: 120
+
+## Interface name as appears in 'nmcli con show' command
+kvm_public_interface: "< interface >"
+
+ocp_install_config_file: "install-config.yaml"
+
+ocp_create_users: "true"
+ocp_users_password: R3dh4t01
+ocp_clusteradmin_password: R3dh4t1!

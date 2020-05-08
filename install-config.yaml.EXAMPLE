@@ -1,0 +1,32 @@
+apiVersion: v1
+baseDomain: <basedomain>
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  platform: {}
+  replicas: < number of workers>
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: < number of masters (1 or 3)>
+metadata:
+  creationTimestamp: null
+  name: < cluster name >
+networking:
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 192.168.126.0/24
+  networkType: OpenShiftSDN
+  serviceNetwork:
+  - 172.30.0.0/16
+platform:
+  none: {}
+publish: External
+pullSecret: '<pull secret from cloud.redhat.com>'
+sshKey: |
+  < key >

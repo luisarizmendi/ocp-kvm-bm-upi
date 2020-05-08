@@ -1,0 +1,164 @@
+---
+
+- name: Install KVM
+  become: true
+  when: (kvm_configure is not defined) or (kvm_configure  != "false")   
+  tags: install
+  block:
+    - name: Installing KVM Packages
+      yum:
+        name:
+          - libvirt
+          - libvirt-devel
+          - libvirt-python3
+          - python3-lxml
+          - libvirt-daemon-kvm
+          - qemu-kvm
+          - NetworkManager
+          - unzip
+          - tar
+        state: present
+
+    - name: Installing firewalld
+      yum:
+        name:
+          - firewalld
+        state: present
+
+    - name: Enable and Start firewalld
+      become: true
+      systemd:
+        name: firewalld
+        state: started
+        enabled: yes
+
+
+    - name: Enable and Start network
+      become: true
+      systemd:
+        name: NetworkManager
+        state: started
+        enabled: yes
+
+
+    - name: Enable and Start libvirtd
+      systemd:
+        name: libvirtd
+        state: started
+        enabled: yes
+
+    - name: Verify KVM module is loaded
+      shell: "lsmod | grep -i kvm"
+      register: result
+      failed_when: "result.rc != 0"
+
+
+
+    - name: Create storage pool for base images
+      shell: |
+        virsh pool-define-as bases dir - - - - "{{ kvm_path_bases | default('/var/lib/libvirt/bases') }}"
+        virsh pool-build bases
+        virsh pool-start bases
+        virsh pool-autostart bases
+        virsh pool-refresh bases
+
+
+    - name: Create a directory for VMs
+      file:
+        path: /var/lib/libvirt/vms
+        state: directory
+
+    - name: Create storage pool for VMs
+      shell: |
+        virsh pool-define-as vms dir - - - - "{{ kvm_path_vms | default('/var/lib/libvirt/vms') }}"
+        virsh pool-build vms
+        virsh pool-start vms
+        virsh pool-autostart vms
+
+
+    - name: Enable IP Forwarding
+      shell: "sysctl net.ipv4.ip_forward=1"
+
+    - name: Make IP Forwarding configuration persistent
+      lineinfile:
+        path: /etc/sysctl.conf
+        line: "net.ipv4.ip_forward = 1"
+        insertbefore: BOF
+
+
+
+    - name: restart libvirt
+      become: true
+      systemd:
+        name: libvirtd
+        state: restarted
+
+    - name: Get Firewalld ZONE
+      shell: "IFACE=$(nmcli con show '{{ kvm_public_interface }}' | grep connection.interface-name | awk '{print $2}') ; ZONE=$(firewall-cmd --list-all-zones | grep -B 3 $IFACE | head -n 1 | awk '{print $1}') ; echo $ZONE"
+      register: firewalldzone
+
+    - name: Configure Firewalld
+      ignore_errors: yes
+      firewalld:
+        zone: "{{ firewalldzone.stdout }}"
+        state: enabled
+        permanent: yes
+        immediate: yes
+        port: "{{ item }}"
+      with_items:
+        - "{{ ssh_port | default('22') }}/tcp"
+        - "80/tcp"
+        - "443/tcp"
+        - "6443/tcp"
+
+
+    - name: Reload Firewalld
+      ignore_errors: yes
+      shell: |
+        firewall-cmd --reload
+
+
+    - name: Reload network
+      become: true
+      systemd:
+        name: NetworkManager
+        state: reloaded
+
+
+    - name: Enable Nested Virtualization
+      shell: |
+        cat /proc/cpuinfo  | grep "model name" | head -n 1 | grep -i Intel
+        if [ $? -ne 0 ]; then   PROC=amd; else     PROC=intel; fi
+        modprobe -r kvm_$PROC
+        modprobe kvm_$PROC nested=1
+        sed -i "s/#options kvm_$PROC nested=1/options kvm_$PROC nested=1/g"  /etc/modprobe.d/kvm.conf
+
+
+- name: Install KVM
+  become: true
+  when: (kvm_configure is not defined) or (kvm_configure  != "false")
+  tags: remove
+  block:
+
+    - name: Get Firewalld ZONE
+      shell: "IFACE=$(nmcli con show '{{ kvm_public_interface }}' | grep connection.interface-name | awk '{print $2}') ; ZONE=$(firewall-cmd --list-all-zones | grep -B 3 $IFACE | head -n 1 | awk '{print $1}') ; echo $ZONE"
+      register: firewalldzone
+
+    - name: Configure Firewalld
+      ignore_errors: yes
+      firewalld:
+        zone: "{{ firewalldzone.stdout }}"
+        state: disabled
+        permanent: yes
+        immediate: yes
+        port: "{{ item }}"
+      with_items:
+        - "80/tcp"
+        - "443/tcp"
+        - "6443/tcp"
+
+
+    - name: Reload Firewalld
+      ignore_errors: yes
+      shell: |
+        firewall-cmd --reload

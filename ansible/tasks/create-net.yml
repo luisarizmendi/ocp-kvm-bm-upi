@@ -1,0 +1,16 @@
+---
+    - name: Define network {{ network_name }}
+      virt_net:
+        command: define
+        name: "{{ network_name }}"
+        xml: "{{ lookup('template', 'ansible/templates/network.xml.j2') }}"
+
+    - name: Active network {{ network_name }}
+      virt_net:
+        state: active
+        name: "{{ network_name}}"
+
+    - name: Activate autostart network {{ network_name }}
+      virt_net:
+        autostart: yes
+        name: "{{ network_name }}"

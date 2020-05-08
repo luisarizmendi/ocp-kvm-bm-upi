@@ -1,0 +1,1 @@
+kvm ansible_host=<ip> ansible_port=22 ansible_user=root

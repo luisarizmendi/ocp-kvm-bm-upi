@@ -1,0 +1,63 @@
+<domain type='kvm' xmlns:qemu='http://libvirt.org/schemas/domain/qemu/1.0'>
+  <name>{{ vm_instance_name }}</name>
+  <uuid>{{ lookup('lines','uuidgen') }}</uuid>
+  <metadata>
+    <kvirt:info xmlns:kvirt="kvirt">
+      <kvirt:profile>kvirt</kvirt:profile>
+      <kvirt:plan>{{ metadata.name }}</kvirt:plan>
+    </kvirt:info>
+  </metadata>
+  <memory unit='{{ vm_memory_unit }}'>{{ vm_memory_size }}</memory>
+  <currentMemory unit='{{ vm_memory_unit }}'>{{ vm_memory_size }}</currentMemory>
+  <vcpu>{{ vm_vcpu }}</vcpu>
+{% if vm_special_cpu is defined and vm_special_cpu|length %}
+  {{ vm_special_cpu }}
+{% endif %}
+  <os>
+    <type arch="x86_64">hvm</type>
+    <boot dev="hd"/>
+    <boot dev='network'/>
+  </os>
+  <features>
+    <acpi/>
+    <apic/>
+    <pae/>
+  </features>
+  <clock offset="utc">
+    <timer name="rtc" tickpolicy="catchup"/>
+    <timer name="pit" tickpolicy="delay"/>
+    <timer name="hpet" present="no"/>
+  </clock>
+  <pm>
+    <suspend-to-mem enabled="no"/>
+    <suspend-to-disk enabled="no"/>
+  </pm>
+  <devices>
+    <emulator>/usr/libexec/qemu-kvm</emulator>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2'/>
+      <source file='{{ kvm_path_vms | default('/var/lib/libvirt/vms') }}/{{ vm_instance_name }}.qcow2'/>
+      <target dev='vda' bus='virtio'/>
+    </disk>
+    <controller type="usb" index="0" model="ich9-ehci1"/>
+    <controller type="usb" index="0" model="ich9-uhci1">
+      <master startport="0"/>
+    </controller>
+    <controller type="usb" index="0" model="ich9-uhci2">
+      <master startport="2"/>
+    </controller>
+    <controller type="usb" index="0" model="ich9-uhci3">
+      <master startport="4"/>
+    </controller>
+    <interface type='network'>
+      <mac address='{{ vm_mac_address  }}'/>
+      <source network='{{ vm_network }}'/>
+      <model type='virtio'/>
+    </interface>
+    <graphics type="vnc" port="-1"/>
+    <console type="pty"/>
+    <rng model="virtio">
+      <backend model="random">/dev/urandom</backend>
+    </rng>
+  </devices>
+</domain>

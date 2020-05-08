@@ -1,0 +1,48 @@
+---
+
+
+####################
+### KVM ENVIRONMENT
+####################
+- hosts: all
+  vars_files:
+    - "vars.yaml"
+    - "{{ ocp_install_config_file }}"
+  tasks:
+
+    - include_tasks: ansible/tasks/ocp_kvm_prepare.yaml
+      tags: [ install, remove ]
+
+    - include_tasks: ansible/tasks/ocp_kvm_environment.yaml
+      tags: [ install, remove ]
+
+
+
+####################
+### OCP PREREQUISITES
+####################
+## Interface name as appears in 'nmcli con show' command
+- hosts: all
+  vars_files:
+    - "vars.yaml"
+  roles:
+    - role: luisarizmendi.ocp_prereq_role
+      vars:
+        srv_interface: "{{ metadata.name }}"
+        nodes_subnet24: "{{ libvirt_net_subnet24 | default('192.168.126') }}"
+        ocp_install_config_path: "{{ ocp_install_config_file }}"
+        ocp_inject_user_ignition: "true"
+
+
+
+
+####################
+### OCP INSTALL
+####################
+- hosts: all
+  vars_files:
+    - "vars.yaml"
+    - "{{ ocp_install_config_file }}"
+  tasks:
+    - include_tasks: ansible/tasks/ocp_deployment.yaml
+      tags: [ install, remove ]
