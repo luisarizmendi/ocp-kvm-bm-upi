@@ -56,7 +56,7 @@
       shell: "for i in $(/usr/local/bin/oc get csr -o name  --all-namespaces); do  /usr/local/bin/oc adm certificate approve $i ; /usr/local/bin/oc adm certificate approve $i ;done"
 
     - pause:
-        minutes: 4
+        minutes: 1
 
     - name: Approving the CSRs
       shell: "for i in $(/usr/local/bin/oc get csr -o name  --all-namespaces); do  /usr/local/bin/oc adm certificate approve $i ; /usr/local/bin/oc adm certificate approve $i ;done"
