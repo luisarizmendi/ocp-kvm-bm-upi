@@ -12,13 +12,13 @@
         name: "{{ metadata.name }}-bootstrap"
         state: running
 
-    - name: Start {{ metadata.name }}-master-{{ item }}
+    - name: Start Masters
       virt: 
         name: "{{ metadata.name }}-master-{{ item }}"
         state: running
       with_sequence: start=0 end="{{ controlPlane.replicas|int - 1 }}" stride=1
 
-    - name: Start {{ metadata.name }}-worker-{{ item }}
+    - name: Start Workers
       virt: 
         name: "{{ metadata.name }}-worker-{{ item }}"
         state: running
@@ -46,25 +46,20 @@
 
 
     - pause:
-        minutes: 1
+        minutes: 4
 
     - name: Copy kubeconfig for admin
       shell: "mkdir ~/.kube ; cp {{ ocp_install_path | default('~/ocp') }}/install/auth/kubeconfig ~/.kube/config "
 
 
     - name: Approving the CSRs
-      shell: "for i in $(/usr/local/bin/oc get csr -o name  --all-namespaces); do  /usr/local/bin/oc adm certificate approve $i ; done"
-
-
+      shell: "for i in $(/usr/local/bin/oc get csr -o name  --all-namespaces); do  /usr/local/bin/oc adm certificate approve $i ; /usr/local/bin/oc adm certificate approve $i ;done"
 
     - pause:
-        minutes: 1
-
+        minutes: 4
 
     - name: Approving the CSRs
-      shell: "for i in $(/usr/local/bin/oc get csr -o name  --all-namespaces); do  /usr/local/bin/oc adm certificate approve $i ; done"
-
-
+      shell: "for i in $(/usr/local/bin/oc get csr -o name  --all-namespaces); do  /usr/local/bin/oc adm certificate approve $i ; /usr/local/bin/oc adm certificate approve $i ;done"
 
     - name: Waiting OCP install to complete
       command: "/usr/local/bin/openshift-install wait-for install-complete --dir {{ ocp_install_path | default('~/ocp') }}/install --log-level debug"
