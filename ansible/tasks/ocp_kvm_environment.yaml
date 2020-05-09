@@ -131,23 +131,6 @@
   tags: remove
   block:
 
-
-    - name: Destroy L2 connectivity
-      block:
-        - name: Create bridge
-          shell: |
-            IFACE=$(nmcli con show '{{ kvm_public_interface }}' | grep connection.interface-name | awk '{print $2}')
-            nmcli con delete {{ metadata.name }}
-            systemctl restart NetworkManager.service
-
-        - name: Set libvirt network type to bridge
-          set_fact:
-            libvirt_net_mode: "bridge"
-
-      when: (libvirt_net_l2 is defined) and (libvirt_net_l2  == "true")
-
-
-
     - name: Stop Workers
       ignore_errors: yes
       virt:
@@ -197,6 +180,23 @@
   become: true
   tags: remove
   block:
+
+
+    - name: Destroy L2 connectivity
+      block:
+        - name: Delete L2 bridge
+          shell: |
+            IFACE=$(nmcli con show '{{ kvm_public_interface }}' | grep connection.interface-name | awk '{print $2}')
+            nmcli con delete {{ metadata.name }}
+            systemctl restart NetworkManager.service
+
+        - name: Set libvirt network type to bridge
+          set_fact:
+            libvirt_net_mode: "bridge"
+
+      when: (libvirt_net_l2 is defined) and (libvirt_net_l2  == "true")
+
+
 
     - name: Delete primary network {{ metadata.name }}
       virt_net:

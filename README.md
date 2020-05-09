@@ -27,17 +27,46 @@ This is the desciption of some of the variables that you can find in that vars.y
 
 * ocp_create_users: If set to "true" additional users will be created in OpenShift after the deployment. One cluster-wide admin (clusteradmin), 25 users (user1 - user25) included in a group ´developers´ and one cluster wide read only user (viewuser) included in a group called `reviewers`. You can disable it by configuring `ocp_create_users` to `false` or change the usernames or passwords modifying the `ocp_users_password` and `ocp_clusteradmin_password` variables
 
+* libvirt_net_subnet24: The ip addressing for this network could be configured using the variable `libvirt_net_subnet24`, for example to configure the 192.168.36.0/24 network you can setup the `libvirt_net_subnet24` to "192.168.36" (no other network masks are supported using this variable). Let's show an example. Imagine that you want to chenge the address of the libvirt network, from 192.168.126.0/24 that is the default to 192.168.72.0/24.In that case you should first add in the `vars.yaml` file some variables as `libvirt_net_subnet24: "true"` and `libvirt_net_subnet24: "192.168.72"`, then the network will be created with that addressing. When using the `libvirt_net_subnet24` then DHCP configured by the `ocp-prereq` role is automatically re-configured.
 
-* libvirt_net_l2: Is set to "true" a bridge with L2 connection to the `kvm_public_interface` is setup. This could be useful to attach "real" phisical worker nodes (maybe with GPUs ;-) ) to the cluster by L2 (so you could use services like DHCP, PXE boot, etc). The ip addressing for this network could be configured using the variable `libvirt_net_subnet24`, for example to configure the 192.168.36.0/24 network you can setup the `libvirt_net_subnet24` to "192.168.36". If you want to configure a network that is not /24 you can use the procedure mentioned in the section below "Pre-required service configurations" to configure the DHCP service. The gateway of this L2 network is by default the .1 address and is setup in the bridge (so the KVM is acting as router). If you want to use an external router and its IP conflicts it (.1) you can setup a different IP for the bridge using the variable `libvirt_net_br_ip`. If that external router has an IP that is not the .1 and you want to use it as default gatway you could need to modify the DHCP service as explained below.
 
 
 ## Pre-required service configurations
 
 You can find all the options in the [ocp-prereq role README file](https://github.com/luisarizmendi/ocp-prereq-role). You should setup the variables in the `ocp-kvm-bm-upi.yaml` file, in the "OCP PREREQUISITES" section.
 
-Let's show an example. Imagine that you want to create a L2 network (192.168.72.0/24) that is extended to a physical network where there is already a physical router (192.168.72.1), you could use that router instead of routing with the KVM node, so you should first add in the `vars.yaml` file some variables as `libvirt_net_subnet24: "true"`, `libvirt_net_subnet24: "192.168.72"` and, since the default gateway conflicts with the default IP setup in that bridge the `libvirt_net_br_ip: "192.168.72.254"`.
+Imagine that you want to change the local users created to provided to permite easy troubleshooting, you should then include the `ocp_local_username` and `ocp_local_userpass` variables in this way:
 
-After that, you should change the setup of the configured DHCP service by changing the values of the variables in the `ocp-kvm-bm-upi.yaml` file (remember that the DNS service is running on the KVM so we setup the DNS to the `libvirt_net_br_ip` IP that is the IP setup in the L2 bridge):
+```
+...
+- hosts: all
+  vars_files:
+    - "vars.yaml"
+  roles:
+    - role: luisarizmendi.ocp_prereq_role
+      vars:
+        srv_interface: "{{ metadata.name }}"
+        nodes_subnet24: "{{ libvirt_net_subnet24 | default('192.168.126') }}"
+        ocp_install_config_path: "{{ ocp_install_config_file }}"
+        ocp_inject_user_ignition: "true"
+        ocp_local_username: "newuser"
+        ocp_local_userpass: "newpassword"
+
+...
+```
+
+
+## Including external physical servers
+
+Imaging that you have a server with "only" 8GB and 4 cores... but with a GPU. That would be great to include it to your OpenShift cluster running in the KVM. By default, the ansible playbooks configure a libvirt virtual network (using NAT to allowing access to external resources), so there is no direct connection between physical networks and that virtual network, but there is a variable that can change that behavior:
+
+* libvirt_net_l2: Is set to "true" a bridge with L2 connection to the `kvm_public_interface` is setup. The gateway of this L2 network is by default the .1 address and it is setup in the bridge (so the KVM is acting as router). In case that you would need to change this IP you could use the variable `libvirt_net_br_ip` but in this case you would need to configure the DHCP server to change the default gateway value, check the [ocp-prereq role README file](https://github.com/luisarizmendi/ocp-prereq-role).
+
+When configured, the L2 connection makes possible to even use the services configured by the `ocp-prereq` role, but in that case remember to include the physical node MAC address in the `nodes` variable list (you can keep the other nodes values as default, but you need to include them in the variable definition, otherwise only the configured nodes in the overwritten variable will be enforced).
+
+### My physical servers must use L3 connection
+
+If your physical server is not attached to the same L2 network the easiest way to do it is by configuring an external physical gateway and change the value of the default gateway in the dhcp `ocp-prepreq` role variable, imagine that the router is located at 192.168.72.254, then you have to setup in `ocp-kvm-bm-upi.yaml` file (DNS is .1 that is the ip configured by default in the KVM bridge):
 
 ```
 ...
@@ -52,18 +81,19 @@ After that, you should change the setup of the configured DHCP service by changi
         ocp_install_config_path: "{{ ocp_install_config_file }}"
         ocp_inject_user_ignition: "true"
         dhcp:
-            router: "192.168.72.1"
+            router: "192.168.72.254"
             bcast: "192.168.72.255"
             netmask: "255.255.255.0"
             poolstart: "192.168.72.10"
             poolend: "192.168.72.30"
             ipid: "192.168.72.0"
             netmaskid: "255.255.255.0"
-            dns: "192.168.72.254"
+            dns: "192.168.72.1"
             domainname: "ocp.mydomain.com"
 ...
 ```
 
+If you cannot add that gateway, the playbooks won't do it automatically but you could reconfigure the behavior of the firewalld service to not perform source NATing and to allow incomming packects to be forwarded to the internal libvirt network (and you should configure a route for the libvirt network in the router that points to the KVM). I didn't have a chance to test this setup but probably it will work.
 
 
 ## Creating or destroying the OpenShift environment
