@@ -27,27 +27,31 @@
             nmcli con up {{ metadata.name }}
             systemctl restart NetworkManager.service
 
+        - name: Move interface to libvirt zone in firewalld
+          ignore_errors: yes
+          shell: |
+            IFACE=$(nmcli con show '{{ kvm_public_interface }}' | grep connection.interface-name | awk '{print $2}')
+            ZONE_EXT=$(firewall-cmd --list-all-zones | grep -B 3 $IFACE | head -n 1 | awk '{print $1}')
+            firewall-cmd --permanent --zone=$ZONE_EXT --remove-interface={{ metadata.name }}
+            firewall-cmd --permanent --zone=libvirt --add-interface={{ metadata.name }}
+            firewall-cmd --reload
+
+
+        - name: Allow forwarding
+          ignore_errors: yes
+          shell: |
+            IFACE=$(nmcli con show '{{ kvm_public_interface }}' | grep connection.interface-name | awk '{print $2}')
+            firewall-cmd --direct --add-rule ipv4 nat POSTROUTING 0 -o $IFACE  -j MASQUERADE
+            firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i {{ metadata.name }} -o $IFACE -j ACCEPT
+            firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i $IFACE -o {{ metadata.name }} -j ACCEPT
+            systemctl restart firewalld
+
         - name: Set libvirt network type to bridge
           set_fact:
             libvirt_net_mode: "bridge"
 
-        - name: Configure Firewalld
-          ignore_errors: yes
-          firewalld:
-            zone: "{{ firewalldzone.stdout }}"
-            state: disabled
-            permanent: yes
-            immediate: yes
-            port: "{{ item }}"
-          with_items:
-            - "{{ ssh_port | default('22') }}/tcp"
-            - "80/tcp"
-            - "443/tcp"
-            - "6443/tcp"
-            - "22623/tcp"
-
-
       when: (libvirt_net_l2 is defined) and (libvirt_net_l2  == "true")
+
 
 
 
@@ -66,6 +70,9 @@
         name: NetworkManager
         state: restarted
         enabled: yes
+
+
+
 
 
 - name: Create VMs
