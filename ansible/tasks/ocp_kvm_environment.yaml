@@ -22,7 +22,7 @@
           shell: |
             IFACE=$(nmcli con show '{{ kvm_public_interface }}' | grep connection.interface-name | awk '{print $2}')
             nmcli con add ifname {{ metadata.name }} type bridge con-name {{ metadata.name }} ip4 {{ libvirt_net_br_ip }}/24
-            nmcli con add type bridge-slave ifname $IFACE master {{ metadata.name }}
+            nmcli con add type bridge-slave ifname $IFACE master {{ metadata.name }} con-name slave-{{ metadata.name }}
             nmcli con modify {{ metadata.name }} bridge.stp no
             nmcli con up {{ metadata.name }}
             systemctl restart NetworkManager.service
@@ -185,9 +185,10 @@
     - name: Destroy L2 connectivity
       block:
         - name: Delete L2 bridge
+          ignore_errors: yes
           shell: |
             IFACE=$(nmcli con show '{{ kvm_public_interface }}' | grep connection.interface-name | awk '{print $2}')
-            nmcli con delete {{ metadata.name }}
+            nmcli con delete {{ metadata.name }} slave-{{ metadata.name }}
             systemctl restart NetworkManager.service
 
         - name: Set libvirt network type to bridge
