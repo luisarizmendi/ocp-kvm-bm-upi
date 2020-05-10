@@ -33,27 +33,9 @@ This is the desciption of some of the variables that you can find in that vars.y
 
 ## Pre-required service configurations
 
-You can find all the options in the [ocp-prereq role README file](https://github.com/luisarizmendi/ocp-prereq-role). You should setup the variables in the `ocp-kvm-bm-upi.yaml` file, in the "OCP PREREQUISITES" section.
+You can find all the options in the [ocp-prereq role README file](https://github.com/luisarizmendi/ocp-prereq-role). You should setup the variables in the `vars.yaml` file.
 
-Imagine that you want to change the local users created to provided to permite easy troubleshooting, you should then include the `ocp_local_username` and `ocp_local_userpass` variables in this way:
-
-```
-...
-- hosts: all
-  vars_files:
-    - "vars.yaml"
-  roles:
-    - role: luisarizmendi.ocp_prereq_role
-      vars:
-        srv_interface: "{{ metadata.name }}"
-        nodes_subnet24: "{{ libvirt_net_subnet24 | default('192.168.126') }}"
-        ocp_install_config_path: "{{ ocp_install_config_file }}"
-        ocp_inject_user_ignition: "true"
-        ocp_local_username: "newuser"
-        ocp_local_userpass: "newpassword"
-
-...
-```
+Imagine that you want to change the local users created to provided to permite easy troubleshooting, you should then include the `ocp_local_username` and `ocp_local_userpass` variables.
 
 
 ## Including external physical servers
@@ -66,31 +48,40 @@ When configured, the L2 connection makes possible to even use the services confi
 
 ### My physical servers must use L3 connection
 
-If your physical server is not attached to the same L2 network the easiest way to do it is by configuring an external physical gateway and change the value of the default gateway in the dhcp `ocp-prepreq` role variable, imagine that the router is located at 192.168.72.254, then you have to setup in `ocp-kvm-bm-upi.yaml` file (DNS is .1 that is the ip configured by default in the KVM bridge):
+If your physical server is not attached to the same L2 network the easiest way to do it is by configuring an external physical gateway and change the value of the default gateway in the dhcp `ocp-prepreq` role variable, imagine that the router is located at 192.168.72.254, then you have to setup in `vars.yaml` file (DNS is .1 that is the ip configured by default in the KVM bridge):
 
 ```
-...
-- hosts: all
-  vars_files:
-    - "vars.yaml"
-  roles:
-    - role: luisarizmendi.ocp_prereq_role
-      vars:
-        srv_interface: "{{ metadata.name }}"
-        nodes_subnet24: "{{ libvirt_net_subnet24 | default('192.168.126') }}"
-        ocp_install_config_path: "{{ ocp_install_config_file }}"
-        ocp_inject_user_ignition: "true"
-        dhcp:
-            router: "192.168.72.254"
-            bcast: "192.168.72.255"
-            netmask: "255.255.255.0"
-            poolstart: "192.168.72.10"
-            poolend: "192.168.72.30"
-            ipid: "192.168.72.0"
-            netmaskid: "255.255.255.0"
-            dns: "192.168.72.1"
-            domainname: "ocp.mydomain.com"
-...
+---
+
+ocp_release: "4.4.3"
+
+ocp_master_memory: 16
+ocp_master_cpu: 4
+ocp_master_disk: 120
+ocp_worker_memory: 24
+ocp_worker_cpu: 4
+ocp_worker_disk: 120
+
+## Interface name as appears in 'nmcli con show' command
+kvm_public_interface: "System eno1"
+kvm_ext_dns: "8.8.8.8"
+
+ocp_install_config_file: "install-config.yaml"
+
+ocp_create_users: "true"
+ocp_users_password: userpass
+ocp_clusteradmin_password: adminpass
+
+dhcp:
+  router: "192.168.72.254"
+  bcast: "192.168.72.255"
+  netmask: "255.255.255.0"
+  poolstart: "192.168.72.10"
+  poolend: "192.168.72.30"
+  ipid: "192.168.72.0"
+  netmaskid: "255.255.255.0"
+  dns: "192.168.72.1"
+  domainname: "ocp.mydomain.com"
 ```
 
 If you cannot add that gateway, the playbooks won't do it automatically but you could reconfigure the behavior of the firewalld service to not perform source NATing and to allow incomming packects to be forwarded to the internal libvirt network (and you should configure a route for the libvirt network in the router that points to the KVM). I didn't have a chance to test this setup but probably it will work.
