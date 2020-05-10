@@ -41,7 +41,7 @@
           ignore_errors: yes
           shell: |
             IFACE=$(nmcli con show '{{ kvm_public_interface }}' | grep connection.interface-name | awk '{print $2}')
-            firewall-cmd --direct --add-rule ipv4 nat POSTROUTING 0 -o $IFACE  -j MASQUERADE
+            firewall-cmd --direct --permanent --add-rule ipv4 nat POSTROUTING 0 -o $IFACE  -j MASQUERADE
             firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i {{ metadata.name }} -o $IFACE -j ACCEPT
             firewall-cmd --direct --permanent --add-rule ipv4 filter FORWARD 0 -i $IFACE -o {{ metadata.name }} -j ACCEPT
             systemctl restart firewalld
