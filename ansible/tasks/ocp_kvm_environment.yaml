@@ -101,7 +101,7 @@
         vm_network: "{{ metadata.name }}"
         vm_mac_address: "52:54:60:00:00:{{ '%02x' % (10 + item|int) }}"
         vm_vcpu: "{{ ocp_master_cpu }}"
-        vm_special_cpu: "{{ master_special_cpu | default('') }}"
+        vm_special_cpu: "<cpu mode='host-passthrough'></cpu>"
         vm_memory_size: "{{ ocp_master_memory }}"
         vm_memory_unit: "{{ master_memory_unit | default('GiB') }}"
         vm_root_disk_size: "{{ ocp_master_disk }}"
@@ -118,11 +118,12 @@
         vm_network: "{{ metadata.name }}"
         vm_mac_address: "52:54:60:00:01:{{ '%02x' % (10 + item|int) }}"
         vm_vcpu: "{{ ocp_worker_cpu }}"
-        vm_special_cpu: "{{ compute_special_cpu | default('') }}"
+        vm_special_cpu: "<cpu mode='host-passthrough'></cpu>"
         vm_memory_size: "{{ ocp_worker_memory }}"
         vm_memory_unit: "{{ worker_memory_unit | default('GiB') }}"
         vm_root_disk_size: "{{ ocp_worker_disk }}"
       with_sequence: start=0 end="{{ compute.0.replicas|int - 1 }}" stride=1
+
 
 
 
