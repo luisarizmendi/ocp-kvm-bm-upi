@@ -8,19 +8,19 @@
 
 
     - name: Start {{ metadata.name }}-bootstrap
-      virt: 
+      virt:
         name: "{{ metadata.name }}-bootstrap"
         state: running
 
     - name: Start Masters
-      virt: 
+      virt:
         name: "{{ metadata.name }}-master-{{ item }}"
         state: running
       with_sequence: start=0 end="{{ controlPlane.replicas|int - 1 }}" stride=1
 
     - name: Start Workers
       ignore_errors: yes
-      virt: 
+      virt:
         name: "{{ metadata.name }}-worker-{{ item }}"
         state: running
       with_sequence: start=0 end="{{ compute.0.replicas|int - 1 }}" stride=1
@@ -72,7 +72,7 @@
 
     - name: Stop {{ metadata.name }}-bootstrap
       ignore_errors: yes
-      virt: 
+      virt:
         name: "{{ metadata.name }}-bootstrap"
         state: destroyed
 
@@ -189,9 +189,6 @@
           - "   https://{{ webconsoleurl.stdout }}     "
           - "                                                                                                        "
           - "                                                                                                        "
-          - "   htpasswd_provider - Cluster Admin         Username: clusteradmin  Password: {{ ocp_clusteradmin_password }} "
-          - "   htpasswd_provider - Cluster Readonly      Username: viewuser      Password: {{ ocp_users_password }} "
-          - "   htpasswd_provider - Regular User (1-25)   Username: userXX        Password: {{ ocp_users_password }} "
           - "   htpasswd_provider - Cluster Admin         Username: clusteradmin  Password: {{ ocp_users_password }} "
           - "   htpasswd_provider - Cluster Readonly      Username: viewuser      Password: {{ ocp_users_password }} "
           - "   htpasswd_provider - Regular User (1-25)   Username: userXX        Password: {{ ocp_users_password }} "
