@@ -32,8 +32,7 @@
         nodes_subnet24: "{{ libvirt_net_subnet24 | default('192.168.126') }}"
         ocp_install_config_path: "{{ ocp_install_config_file }}"
         ocp_inject_user_ignition: "true"
-
-
+        ocp_release: "{{ ocp_release_version }}"
 
 
 ####################
