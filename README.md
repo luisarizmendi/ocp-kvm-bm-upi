@@ -57,10 +57,12 @@ ocp_release: "4.4.3"
 
 ocp_master_memory: 16
 ocp_master_cpu: 4
-ocp_master_disk: 120
+ocp_master_disk_root: 120
+ocp_master_disk_data: 1
 ocp_worker_memory: 24
 ocp_worker_cpu: 4
-ocp_worker_disk: 120
+ocp_worker_disk_root: 120
+ocp_worker_disk_data: 500
 
 ## Interface name as appears in 'nmcli con show' command
 kvm_public_interface: "System eno1"

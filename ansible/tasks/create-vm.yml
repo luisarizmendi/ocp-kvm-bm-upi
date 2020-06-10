@@ -1,9 +1,14 @@
 ---
 # # VM: https://github.com/jdauphant/ansible-role-kvm/blob/master/templates/vm.kvm.libvirt.xml.j2
 - name: Create primary disk for {{ vm_instance_name }}
-  command: "qemu-img create -f qcow2 {{ kvm_path_vms | default('/var/lib/libvirt/vms') }}/{{ vm_instance_name }}.qcow2 {{ vm_root_disk_size }}G"
+  command: "qemu-img create -f qcow2 {{ kvm_path_vms | default('/var/lib/libvirt/vms') }}/{{ vm_instance_name }}_disk1.qcow2 {{ vm_root_disk_size }}G"
   args:
-    creates: "{{ kvm_path_vms | default('/var/lib/libvirt/vms') }}/{{ vm_instance_name }}.qcow2"
+    creates: "{{ kvm_path_vms | default('/var/lib/libvirt/vms') }}/{{ vm_instance_name }}_disk1.qcow2"
+
+- name: Create secondary disk for {{ vm_instance_name }}
+  command: "qemu-img create -f qcow2 {{ kvm_path_vms | default('/var/lib/libvirt/vms') }}/{{ vm_instance_name }}_disk2.qcow2 {{ vm_data_disk_size }}G"
+  args:
+    creates: "{{ kvm_path_vms | default('/var/lib/libvirt/vms') }}/{{ vm_instance_name }}_disk2.qcow2"
 
 
 - name: Define VirtualMachine {{ vm_instance_name }}

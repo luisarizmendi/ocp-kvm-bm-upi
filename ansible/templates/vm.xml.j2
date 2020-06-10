@@ -36,8 +36,14 @@
     <emulator>/usr/libexec/qemu-kvm</emulator>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2'/>
-      <source file='{{ kvm_path_vms | default('/var/lib/libvirt/vms') }}/{{ vm_instance_name }}.qcow2'/>
+      <source file='{{ kvm_path_vms | default('/var/lib/libvirt/vms') }}/{{ vm_instance_name }}_disk1.qcow2'/>
       <target dev='vda' bus='virtio'/>
+    </disk>
+    <disk type="file" device="disk">
+      <driver name="qemu" type="qcow2"/>
+      <serial>fakeid-{{ vm_instance_name }}</serial>
+      <source file="{{ kvm_path_vms | default('/var/lib/libvirt/vms') }}/{{ vm_instance_name }}_disk2.qcow2"/>
+      <target dev="vdb" bus="virtio"/>
     </disk>
     <controller type="usb" index="0" model="ich9-ehci1"/>
     <controller type="usb" index="0" model="ich9-uhci1">

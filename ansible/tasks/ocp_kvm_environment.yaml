@@ -91,7 +91,7 @@
         vm_memory_size: "16"
         vm_memory_unit: "GiB"
         vm_root_disk_size: "{{ 120 }}"
-
+        vm_data_disk_size: "{{ 1 }}"
 
 
     - name: Create master nodes
@@ -104,7 +104,8 @@
         vm_special_cpu: "<cpu mode='host-passthrough'></cpu>"
         vm_memory_size: "{{ ocp_master_memory }}"
         vm_memory_unit: "{{ master_memory_unit | default('GiB') }}"
-        vm_root_disk_size: "{{ ocp_master_disk }}"
+        vm_root_disk_size: "{{ ocp_master_disk_root }}"
+        vm_data_disk_size: "{{ ocp_master_disk_data }}"
       with_sequence: start=0 end="{{ controlPlane.replicas|int - 1 }}" stride=1
 
 
@@ -121,7 +122,8 @@
         vm_special_cpu: "<cpu mode='host-passthrough'></cpu>"
         vm_memory_size: "{{ ocp_worker_memory }}"
         vm_memory_unit: "{{ worker_memory_unit | default('GiB') }}"
-        vm_root_disk_size: "{{ ocp_worker_disk }}"
+        vm_root_disk_size: "{{ ocp_worker_disk_root }}"
+        vm_data_disk_size: "{{ ocp_master_disk_data }}"
       with_sequence: start=0 end="{{ compute.0.replicas|int - 1 }}" stride=1
 
 
