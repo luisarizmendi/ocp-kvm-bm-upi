@@ -60,6 +60,11 @@
       <source network='{{ vm_network }}'/>
       <model type='virtio'/>
     </interface>
+    <interface type='network'>
+      <mac address='{{ vm_mac_address_2  }}'/>
+      <source network='{{ vm_network_2 }}'/>
+      <model type='virtio'/>
+    </interface>
     <graphics type="vnc" port="-1"/>
     <console type="pty"/>
     <rng model="virtio">

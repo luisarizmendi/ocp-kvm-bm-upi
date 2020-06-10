@@ -1,6 +1,6 @@
 <network>
     <name>{{ network_name }}</name>
-    <forward mode='{{ libvirt_net_mode | default('nat') }}'/>
+    <forward mode='{{ network_mode }}'/>
     <bridge name="{{ network_name }}" />
     {% if libvirt_net_mode == 'nat' %}
     <ip address='{{ network_sub24.split('.')[:3] | join('.')}}.1' netmask='255.255.255.0' />
