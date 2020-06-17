@@ -1,6 +1,6 @@
 ---
-
-ocp_release_version: "4.4.3"
+## Check release names in https://mirror.openshift.com/pub/openshift-v4/clients/ocp
+ocp_release_version: "4.4.6"
 
 ocp_master_memory: 16
 ocp_master_cpu: 4

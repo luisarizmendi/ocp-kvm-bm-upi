@@ -62,6 +62,7 @@
         network_name: "{{ metadata.name }}"
         network_sub24: "{{ libvirt_net_subnet24 | default('192.168.126') }}"
         network_mode: "{{ libvirt_net_mode | default('nat') }}"
+        network_dhcp: "false"
 
     - name: Define secondary network
       include: create-net.yml
@@ -69,6 +70,7 @@
         network_name: "{{ metadata.name }}-2"
         network_sub24: "{{ libvirt_net_2_subnet24 | default('192.168.100') }}"
         network_mode: "nat"
+        network_dhcp: "true"
 
 
     - name: Configure DNS external servers
