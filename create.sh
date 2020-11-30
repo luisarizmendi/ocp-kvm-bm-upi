@@ -16,6 +16,8 @@ sdate=$(date +%s)
 # INSTALL OPENSHIFT PREREQUISITES
 ########################################
 
+dnf install -y python3-netaddr
+
 ansible-galaxy install luisarizmendi.ocp_prereq_role --force
 
 ansible-playbook -vv -i inventory --tags install ocp-kvm-bm-upi.yaml
