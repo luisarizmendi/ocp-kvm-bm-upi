@@ -5,6 +5,12 @@
         name: "{{ network_name }}"
         xml: "{{ lookup('template', 'ansible/templates/network.xml.j2') }}"
 
+    - name: BUG with iptables No chain/target/match by that name
+      systemd:
+        name: libvirtd
+        state: restarted
+        enabled: yes
+
     - name: Active network {{ network_name }}
       virt_net:
         state: active
