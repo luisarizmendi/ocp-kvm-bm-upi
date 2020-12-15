@@ -70,7 +70,7 @@
         network_name: "{{ metadata.name }}-2"
         network_sub24: "{{ libvirt_net_2_subnet24 | default('192.168.100') }}"
         network_mode: "nat"
-        network_dhcp: "true"
+        network_dhcp: "false"
 
 
     - name: Configure DNS external servers
