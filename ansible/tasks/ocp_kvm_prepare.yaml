@@ -121,8 +121,8 @@
         - "6443/tcp"
 
 
-    - name: Configure Masquerade
-      shell: "IFACE=$(nmcli con show '{{ kvm_public_interface }}' | grep connection.interface-name | awk '{print $2}') ; firewall-cmd --permanent --direct --add-rule ipv4 nat POSTROUTING 0 -o $IFACE -j MASQUERADE"
+#    - name: Configure Masquerade
+#      shell: "IFACE=$(nmcli con show '{{ kvm_public_interface }}' | grep connection.interface-name | awk '{print $2}') ; firewall-cmd --permanent --direct --add-rule ipv4 nat POSTROUTING 0 -o $IFACE -j MASQUERADE"
 
     - name: Reload Firewalld
       ignore_errors: yes
