@@ -16,6 +16,7 @@
           - qemu-kvm
           - NetworkManager
           - unzip
+          - libgcrypt
           - tar
         state: present
 
